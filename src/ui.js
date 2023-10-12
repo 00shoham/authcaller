@@ -122,7 +122,7 @@ function Generate()
         }
       }
     else
-      DisplayError( "Invalid API response structure" );
+      DisplayError( "Invalid API response - " + JSON.stringify( responseObj ) );
     }
   else
     alert( "Malformed HTML - where do I stick the result?" );
@@ -157,11 +157,11 @@ function Validate()
           }
         }
       else
-        DisplayError( "Invalid PIN - possibly timed out." );
+        DisplayError( "Invalid PIN - possibly timed out." + JSON.stringify( responseObj ) );
       }
     else
       {
-      DisplayError( "Invalid API response structure." );
+      DisplayError( "Invalid API response - " + JSON.stringify( responseObj ) );
       }
     }
 
