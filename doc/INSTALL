@@ -1,0 +1,14 @@
+AuthCaller is designed to run on Linux systems.
+
+It was built on Ubuntu and should work pretty much out of the box there.
+
+You do need Apache installed first, with the cgi-bin module enabled.  
+
+To build it, you will also have to download and compile idanlib:
+
+  https://github.com/00shoham/idanlib
+
+That has its own dependencies.
+
+Once that has been downloaded and installed, you can build AuthCaller
+and install it using the ./install.sh script in the src folder.
