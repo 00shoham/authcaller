@@ -3,15 +3,14 @@ BIN=\
 
 all: $(BIN)
 
-LUADIR := $(shell /usr/bin/find /usr/include -type d -name 'lua*')
-LUAPARTS := $(subst /, ,$(LUADIR))
-LUAVER := $(lastword $(LUAPARTS))
-
 UTILDIR=../../idanlib/src
 UTILSLIB=$(UTILDIR)/utils.a
 
-INCLUDES=-I$(LUADIR) -I$(UTILDIR)
-LIBS=$(UTILSLIB) -lm -lpthread -luuid -l$(LUAVER) -lcurl
+LUADIR := $(shell $(UTILDIR)/lua-dir.sh)
+LUALIB := $(shell $(UTILDIR)/lua-ver.sh)
+
+INCLUDES=$(LUADIR) -I$(UTILDIR)
+LIBS=$(UTILSLIB) -lm -lpthread -luuid $(LUALIB) -lcurl
 
 CC=gcc
 CFLAGS=-Wall -O2 -g $(INCLUDES)
