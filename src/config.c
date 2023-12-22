@@ -1,11 +1,25 @@
 #include "base.h"
 
+char defaultKey[] =
+  {
+  0xdb, 0xd2, 0x5a, 0x74, 0xc7, 0x44, 0x3b, 0x43,
+  0xd2, 0x24, 0xcb, 0xce, 0x63, 0x4a, 0xe5, 0x4d,
+  0x5d, 0x64, 0xd6, 0xcc, 0xcb, 0x97, 0x75, 0x2b,
+  0x95, 0xa8, 0x52, 0x85, 0xe6, 0xed, 0x32, 0xc1
+  };
+
 void SetDefaults( _CONFIG* config )
   {
   memset( config, 0, sizeof(_CONFIG) );
   config->pinFolder = strdup( PIN_FOLDER );
   config->pinDigits = PIN_DIGITS;
   config->pinLifetimeSeconds = PIN_LIFETIME_SECONDS;
+
+  memcpy( config->key, defaultKey, AES_KEYLEN );
+  config->userEnvVar = strdup( DEFAULT_USER_ENV_VAR );
+  config->sessionCookieName = strdup( COOKIE_ID );
+  config->urlEnvVar = strdup( DEFAULT_REQUEST_URI_ENV_VAR );
+  config->authServiceUrl = strdup( DEFAULT_AUTH_URL );
   }
 
 void FreeConfig( _CONFIG* config )
@@ -13,8 +27,12 @@ void FreeConfig( _CONFIG* config )
   if( config==NULL )
     return;
 
-  FreeIfAllocated( &(config->userEnvVar) );
   FreeIfAllocated( &(config->pinFolder) );
+
+  FreeIfAllocated( &(config->userEnvVar) );
+  FreeIfAllocated( &(config->sessionCookieName) );
+  FreeIfAllocated( &(config->urlEnvVar) );
+  FreeIfAllocated( &(config->authServiceUrl) );
 
   free( config );
   }
@@ -54,6 +72,37 @@ void ProcessConfigLine( char* ptr, char* equalsChar, _CONFIG* config )
         Error( "Invalid number for PIN_LIFETIME_SECONDS (%d-%d)", PIN_MIN_LIFETIME, PIN_MAX_LIFETIME );
       config->pinLifetimeSeconds = n;
       }
+    else if( strcasecmp( variable, "SESSION_COOKIE_NAME" )==0 )
+      {
+      FreeIfAllocated( &(config->sessionCookieName) );
+      config->sessionCookieName = strdup( value );
+      }
+    else if( strcasecmp( variable, "AUTHENTICATION_SERVICE_URL" )==0 )
+      {
+      FreeIfAllocated( &(config->authServiceUrl) );
+      config->authServiceUrl = strdup( value );
+      }
+    else if( strcasecmp( variable, "URL_ENV_VARIABLE" )==0 )
+      {
+      FreeIfAllocated( &(config->urlEnvVar) );
+      config->urlEnvVar = strdup( value );
+      }
+    else if( strcasecmp( variable, "SESSION_COOKIE_ENCRYPTION_KEY" )==0 )
+      {
+      uint8_t binaryKey[100];
+      memset( binaryKey, 0, sizeof(binaryKey) );
+      UnescapeString( value, binaryKey, sizeof(binaryKey)-1 );
+      memset( config->key, 0, AES_KEYLEN );
+      memcpy( config->key, binaryKey, AES_KEYLEN );
+      }
+    else
+      {
+      /* append this variable to our linked list, for future expansion */
+      /* do this always, so not here for just
+         invalid commands:
+         config->list = NewTagValue( variable, value, config->list, 1 );
+      */
+      }
     }
   }
 
@@ -67,6 +116,30 @@ void PrintConfig( FILE* f, _CONFIG* config )
   if( NOTEMPTY( config->userEnvVar ) )
     {
     fprintf( f, "USER_ENV_VARIABLE=%s\n", config->userEnvVar );
+    }
+
+  if( memcmp( config->key, defaultKey, AES_KEYLEN )!=0 )
+    {
+    char key_ascii[100];
+    fprintf( f, "SESSION_COOKIE_ENCRYPTION_KEY=%s\n", EscapeString( config->key, AES_KEYLEN, key_ascii, sizeof( key_ascii ) ) );
+    }
+
+  if( NOTEMPTY( config->sessionCookieName )
+      && strcmp( config->sessionCookieName, COOKIE_ID )!=0 )
+    {
+    fprintf( f, "SESSION_COOKIE_NAME=%s\n", config->sessionCookieName );
+    }
+
+  if( NOTEMPTY( config->authServiceUrl )
+      && strcmp( config->authServiceUrl, DEFAULT_AUTH_URL )!=0 )
+    {
+    fprintf( f, "SESSION_COOKIE_NAME=%s\n", config->authServiceUrl );
+    }
+
+  if( NOTEMPTY( config->urlEnvVar )
+      && strcmp( config->urlEnvVar, DEFAULT_REQUEST_URI_ENV_VAR )!=0 )
+    {
+    fprintf( f, "URL_ENV_VARIABLE=%s\n", config->urlEnvVar );
     }
 
   if( NOTEMPTY( config->pinFolder ) &&

@@ -100,11 +100,16 @@ int main( int argc, char** argv )
           && q[4]!=0 )
         {
         inCGI = 2;
+        /* char* whoAmI = ExtractUserIDOrDie( cm_api, conf->userEnvVar ); */
+        char* whoAmI = ExtractUserIDOrDieEx( cm_ui,
+                                             conf->userEnvVar, conf->sessionCookieName,
+                                             conf->urlEnvVar, conf->authServiceUrl,
+                                             conf->key );
+
         fputs( "Content-Type: application/json\r\n\r\n", stdout );
 
-        char* whoAmI = ExtractUserIDOrDie( cm_api, conf->userEnvVar );
-
         CallAPIFunction( conf, whoAmI, q+4 );
+        fflush(stdout);
         FreeConfig( conf );
         exit(0);
         }

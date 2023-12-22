@@ -13,10 +13,15 @@
 
 typedef struct _config
   {
-  char* userEnvVar;
   char* pinFolder;
   int pinDigits;
   int pinLifetimeSeconds;
+
+  char* userEnvVar;
+  uint8_t key[AES_KEYLEN];
+  char* sessionCookieName;
+  char* authServiceUrl;
+  char* urlEnvVar;
   } _CONFIG;
 
 void SetDefaults( _CONFIG* config );
