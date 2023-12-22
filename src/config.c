@@ -17,7 +17,7 @@ void SetDefaults( _CONFIG* config )
 
   memcpy( config->key, defaultKey, AES_KEYLEN );
   config->userEnvVar = strdup( DEFAULT_USER_ENV_VAR );
-  config->sessionCookieName = strdup( COOKIE_ID );
+  config->sessionCookieName = strdup( DEFAULT_ID_OF_AUTH_COOKIE );
   config->urlEnvVar = strdup( DEFAULT_REQUEST_URI_ENV_VAR );
   config->authServiceUrl = strdup( DEFAULT_AUTH_URL );
   }
@@ -125,7 +125,7 @@ void PrintConfig( FILE* f, _CONFIG* config )
     }
 
   if( NOTEMPTY( config->sessionCookieName )
-      && strcmp( config->sessionCookieName, COOKIE_ID )!=0 )
+      && strcmp( config->sessionCookieName, DEFAULT_ID_OF_AUTH_COOKIE )!=0 )
     {
     fprintf( f, "SESSION_COOKIE_NAME=%s\n", config->sessionCookieName );
     }
