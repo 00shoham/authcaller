@@ -16,6 +16,7 @@ void SetDefaults( _CONFIG* config )
   config->pinLifetimeSeconds = PIN_LIFETIME_SECONDS;
 
   memcpy( config->key, defaultKey, AES_KEYLEN );
+  config->myCSS = strdup( DEFAULT_MY_CSS );
   config->userEnvVar = strdup( DEFAULT_USER_ENV_VAR );
   config->sessionCookieName = strdup( DEFAULT_ID_OF_AUTH_COOKIE );
   config->urlEnvVar = strdup( DEFAULT_REQUEST_URI_ENV_VAR );
@@ -26,6 +27,8 @@ void FreeConfig( _CONFIG* config )
   {
   if( config==NULL )
     return;
+
+  FreeIfAllocated( &( config->myCSS) );
 
   FreeIfAllocated( &(config->pinFolder) );
 
@@ -48,7 +51,12 @@ void ProcessConfigLine( char* ptr, char* equalsChar, _CONFIG* config )
 
   if( NOTEMPTY( variable ) && NOTEMPTY( value ) )
     {
-    if( strcasecmp( variable, "USER_ENV_VARIABLE" )==0 )
+    if( strcasecmp( variable, "MY_CSS" )==0 )
+      {
+      FreeIfAllocated( &( config->myCSS) );
+      config->myCSS = strdup( value );
+      }
+    else if( strcasecmp( variable, "USER_ENV_VARIABLE" )==0 )
       {
       FreeIfAllocated( &( config->userEnvVar ) );
       config->userEnvVar = strdup( value );
@@ -113,10 +121,12 @@ void PrintConfig( FILE* f, _CONFIG* config )
     Error("Cannot print configuration to NULL file");
     }
 
+  if( NOTEMPTY( config->myCSS )
+      && strcmp( config->myCSS, DEFAULT_MY_CSS )!=0 )
+    fprintf( f, "MY_CSS=%s\n", config->myCSS );
+
   if( NOTEMPTY( config->userEnvVar ) )
-    {
     fprintf( f, "USER_ENV_VARIABLE=%s\n", config->userEnvVar );
-    }
 
   if( memcmp( config->key, defaultKey, AES_KEYLEN )!=0 )
     {
@@ -218,6 +228,9 @@ void ValidateConfig( _CONFIG* config )
   {
   if( config==NULL )
     Error( "Cannot validate a NULL configuration" );
+
+  if( EMPTY( config->myCSS ) )
+    Error( "MY_CSS must be set (or left as default) in config" );
 
   if( EMPTY( config->userEnvVar ) )
     Error( "USER_ENV_VARIABLE must be set in config file" );

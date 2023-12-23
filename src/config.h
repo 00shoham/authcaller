@@ -17,6 +17,8 @@ typedef struct _config
   int pinDigits;
   int pinLifetimeSeconds;
 
+  char* myCSS;
+
   char* userEnvVar;
   uint8_t key[AES_KEYLEN];
   char* sessionCookieName;

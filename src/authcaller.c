@@ -104,7 +104,8 @@ int main( int argc, char** argv )
         char* whoAmI = ExtractUserIDOrDieEx( cm_api,
                                              conf->userEnvVar, conf->sessionCookieName,
                                              conf->urlEnvVar, conf->authServiceUrl,
-                                             conf->key );
+                                             conf->key,
+                                             conf->myCSS );
 
         fputs( "Content-Type: application/json\r\n\r\n", stdout );
 
