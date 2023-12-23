@@ -24,6 +24,9 @@ typedef struct _config
   char* sessionCookieName;
   char* authServiceUrl;
   char* urlEnvVar;
+
+  char* remoteAddrEnvVar;
+  char* userAgentEnvVar;
   } _CONFIG;
 
 void SetDefaults( _CONFIG* config );

@@ -102,8 +102,12 @@ int main( int argc, char** argv )
         inCGI = 2;
         /* char* whoAmI = ExtractUserIDOrDie( cm_api, conf->userEnvVar ); */
         char* whoAmI = ExtractUserIDOrDieEx( cm_api,
-                                             conf->userEnvVar, conf->sessionCookieName,
-                                             conf->urlEnvVar, conf->authServiceUrl,
+                                             conf->userEnvVar,
+                                             conf->remoteAddrEnvVar,
+                                             conf->userAgentEnvVar,
+                                             conf->sessionCookieName,
+                                             conf->urlEnvVar,
+                                             conf->authServiceUrl,
                                              conf->key,
                                              conf->myCSS );
 

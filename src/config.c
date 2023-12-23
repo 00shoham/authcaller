@@ -21,6 +21,8 @@ void SetDefaults( _CONFIG* config )
   config->sessionCookieName = strdup( DEFAULT_ID_OF_AUTH_COOKIE );
   config->urlEnvVar = strdup( DEFAULT_REQUEST_URI_ENV_VAR );
   config->authServiceUrl = strdup( DEFAULT_AUTH_URL );
+  config->remoteAddrEnvVar = strdup( DEFAULT_REMOTE_ADDR );
+  config->userAgentEnvVar = strdup( DEFAULT_USER_AGENT_VAR );
   }
 
 void FreeConfig( _CONFIG* config )
@@ -36,6 +38,8 @@ void FreeConfig( _CONFIG* config )
   FreeIfAllocated( &(config->sessionCookieName) );
   FreeIfAllocated( &(config->urlEnvVar) );
   FreeIfAllocated( &(config->authServiceUrl) );
+  FreeIfAllocated( &(config->remoteAddrEnvVar) );
+  FreeIfAllocated( &(config->userAgentEnvVar) );
 
   free( config );
   }
@@ -95,6 +99,16 @@ void ProcessConfigLine( char* ptr, char* equalsChar, _CONFIG* config )
       FreeIfAllocated( &(config->urlEnvVar) );
       config->urlEnvVar = strdup( value );
       }
+    else if( strcasecmp( variable, "REMOTE_ADDR_ENV_VARIABLE" )==0 )
+      {
+      FreeIfAllocated( &(config->remoteAddrEnvVar ) );
+      config->remoteAddrEnvVar = strdup( value );
+      }
+    else if( strcasecmp( variable, "USER_AGENT_ENV_VARIABLE" )==0 )
+      {
+      FreeIfAllocated( &(config->userAgentEnvVar ) );
+      config->userAgentEnvVar = strdup( value );
+      }
     else if( strcasecmp( variable, "SESSION_COOKIE_ENCRYPTION_KEY" )==0 )
       {
       uint8_t binaryKey[100];
@@ -150,6 +164,18 @@ void PrintConfig( FILE* f, _CONFIG* config )
       && strcmp( config->urlEnvVar, DEFAULT_REQUEST_URI_ENV_VAR )!=0 )
     {
     fprintf( f, "URL_ENV_VARIABLE=%s\n", config->urlEnvVar );
+    }
+
+  if( NOTEMPTY( config->remoteAddrEnvVar )
+      && strcmp( config->remoteAddrEnvVar, DEFAULT_REMOTE_ADDR )!=0 )
+    {
+    fprintf( f, "REMOTE_ADDR_ENV_VARIABLE=%s\n", config->remoteAddrEnvVar );
+    }
+
+  if( NOTEMPTY( config->userAgentEnvVar )
+      && strcmp( config->userAgentEnvVar, DEFAULT_USER_AGENT_VAR )!=0 )
+    {
+    fprintf( f, "USER_AGENT_ENV_VARIABLE=%s\n", config->userAgentEnvVar );
     }
 
   if( NOTEMPTY( config->pinFolder ) &&
