@@ -88,16 +88,17 @@ int main( int argc, char** argv )
     {
     inCGI = 2;
 
-    /* QQQ */
-    char* whoAmI = ExtractUserIDOrDieEx( cm_ui,
-                                         NULL,
-                                         NULL,
-                                         NULL,
-                                         NULL,
-                                         NULL,
-                                         NULL,
+    char* whoAmI = ExtractUserIDOrDieEx( cm_api,
+                                         conf->userEnvVar,
+                                         conf->remoteAddrEnvVar,
+                                         conf->userAgentEnvVar,
+                                         "IL-SHORT-SESSION-STATE",
+                                         conf->urlEnvVar,
+                                         conf->authServiceUrl,
                                          conf->key,
-                                         "/authcaller/ui.css" );
+                                         conf->myCSS );
+
+    Notice( "AuthCaller: whoAmI = [%s]", NULLPROTECT( whoAmI ) );
 
     if( EMPTY( q ) )
       { /* send the browser to a likely URL for the app UI */
@@ -111,17 +112,6 @@ int main( int argc, char** argv )
       if( ( strncasecmp( q, "api&", 4 )==0 || strncasecmp( q, "api/", 4 )==0 )
           && q[4]!=0 )
         {
-        inCGI = 2;
-        /* char* whoAmI = ExtractUserIDOrDie( cm_api, conf->userEnvVar ); */
-        char* whoAmI = ExtractUserIDOrDieEx( cm_api,
-                                             conf->userEnvVar,
-                                             conf->remoteAddrEnvVar,
-                                             conf->userAgentEnvVar,
-                                             conf->sessionCookieName,
-                                             conf->urlEnvVar,
-                                             conf->authServiceUrl,
-                                             conf->key,
-                                             conf->myCSS );
 
         fputs( "Content-Type: application/json\r\n\r\n", stdout );
 
