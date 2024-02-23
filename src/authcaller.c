@@ -86,6 +86,18 @@ int main( int argc, char** argv )
     }
   else
     {
+    inCGI = 2;
+
+    /* QQQ */
+    char* whoAmI = ExtractUserIDOrDieEx( cm_ui,
+                                         NULL,
+                                         NULL,
+                                         NULL,
+                                         NULL,
+                                         NULL,
+                                         NULL,
+                                         conf->key,
+                                         "/authcaller/ui.css" );
 
     if( EMPTY( q ) )
       { /* send the browser to a likely URL for the app UI */
