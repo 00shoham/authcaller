@@ -164,10 +164,67 @@ function Validate()
       DisplayError( "Invalid API response - " + JSON.stringify( responseObj ) );
       }
     }
+  }
 
+function DisplayUserID()
+  {
+  var user = document.getElementById('user');
+  if( typeof user != "object" )
+    {  
+    console.log( "Cannot locate 'user' tag in page" );
+    return;
+    }
+
+  var args = { };
+  var responseObj = CallAPIFunction( "user", "identity", args );
+
+  if( typeof responseObj != "undefined"
+      && typeof responseObj.code != "undefined" )
+    {
+    if( responseObj.code == 0 )
+      {
+      if( typeof responseObj["USER"] == "string" )
+        {
+        user.innerHTML = responseObj["USER"] ;
+        }
+      else
+        {
+        resDiv.innerHTML = "PIN " + pin + " has an unknown owner - " + JSON.stringify( responseObj ) + ".";
+        }
+      }
+    else
+      console.log( "Failed to get user/identity - " + JSON.stringify( responseObj ) );
+    }
+  else
+    {
+    console.log( "Invalid API response to user/identity - " + JSON.stringify( responseObj ) );
+    }
   }
 
 var doneInitialRefresh = 0;
+
+function LogoutURL()
+  {
+  var html = "";
+
+  var args = { };
+  var responseObj = CallAPIFunction( "logout", "get-url", args );
+  if( typeof responseObj == "undefined"
+      || typeof responseObj.code == "undefined"
+      || responseObj.code!=0 )
+    return "logout/get-url failed (A)";
+
+  if( typeof responseObj["URL"] == "undefined" )
+    return "logout/get-url failed (B)";
+
+  var url = responseObj["URL"];
+
+  // html += "<div class='break'></div>\n";
+
+  html += "<a class='logout' href='" + url + "'>Logout</a>\n";
+
+  return html;
+  }
 
 function Refresh()
   {
@@ -198,6 +255,7 @@ function Refresh()
   content += "<h1>Mutual Authentication</h1>\n";
   content += "<p>This application allows two people in the same organization to\n";
   content += "   verify one another's identity after both sign into this UI.</p>\n";
+  content += "<p>You are signed in as: <span class='user' id='user'></span></p>\n";
   content += "<table class='maintab'>\n";
   content += "  <tr>\n";
   content += "    <td class='head'>\n";
@@ -233,6 +291,9 @@ function Refresh()
   content += "  </tr>\n";
   content += "</table>\n";
 
+  content += "<div class='break'></div>\n";
+  content += "<p>" + LogoutURL() + "</p>\n";
+
   htmlContainer.innerHTML = content;
 
   var form = document.getElementById('pin-input');
@@ -240,6 +301,8 @@ function Refresh()
     form.attachEvent( "submit", Validate );
   else
     form.addEventListener( "submit", Validate );
+
+  DisplayUserID();
 
   var pinInput = document.getElementById('pin');
   if( pinInput )

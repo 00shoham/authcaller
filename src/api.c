@@ -61,6 +61,27 @@ void ApiPinValidate( _CONFIG* conf, char* userID, char* methodName, _TAG_VALUE* 
     APIError( methodName, -103, "Cannot validate empty PIN" );
   }
 
+void ApiGetUserID( _CONFIG* conf, char* userID, char* methodName, _TAG_VALUE* args )
+  {
+  if( NOTEMPTY( userID ) )
+    printf( "{ \"USER\":\"%s\", \"result\":\"%s\", \"code\": 0 }\n", userID, SUCCESS );
+  else
+    APIError( methodName, -100, "User not authenticated." );
+  }
+
+void GetLogoutURL( _CONFIG* conf, char* userID, char* methodName, _TAG_VALUE* args )
+  {
+  if( conf==NULL )
+    APIError( methodName, -1, "No configuration" );
+  if( EMPTY( conf->authServiceUrl ) )
+    APIError( methodName, -2, "No AUTH_SERVICE_URL not set in configuration" );
+
+  char url[BUFLEN];
+  snprintf( url, sizeof(url)-1, "%s?LOGOUT", conf->authServiceUrl );
+
+  printf( "{ \"URL\":\"%s\", \"result\":\"%s\", \"code\": 0 }\n", url, SUCCESS );
+  }
+
 typedef struct fnRecord
   {
   char* topic;
@@ -72,6 +93,8 @@ _FN_RECORD methods[] =
   {
     { "pin", "generate", ApiPinGenerate },
     { "pin", "validate", ApiPinValidate },
+    { "user", "identity", ApiGetUserID },
+    { "logout", "get-url", GetLogoutURL },
     { "NULL", "NULL", NULL }
   };
 
