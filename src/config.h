@@ -13,6 +13,12 @@
 
 typedef struct _config
   {
+  char* configFolder;
+  int currentlyParsing;
+  _TAG_VALUE* parserLocation;
+  _TAG_VALUE *includes;
+  _TAG_VALUE *list;
+
   char* pinFolder;
   int pinDigits;
   int pinLifetimeSeconds;

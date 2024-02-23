@@ -8,6 +8,21 @@ char defaultKey[] =
   0x95, 0xa8, 0x52, 0x85, 0xe6, 0xed, 0x32, 0xc1
   };
 
+void UpdateGlobalParsingLocation( _CONFIG* config )
+  {
+  FreeIfAllocated( &parsingLocation );
+  if( config!=NULL
+      && config->parserLocation!=NULL
+      && NOTEMPTY( config->parserLocation->tag ) )
+    {
+    char whereAmI[BUFLEN];
+    snprintf( whereAmI, sizeof(whereAmI)-1, "%s::%d ",
+              config->parserLocation->tag,
+              config->parserLocation->iValue );
+    parsingLocation = strdup( whereAmI );
+    }
+  }
+
 void SetDefaults( _CONFIG* config )
   {
   memset( config, 0, sizeof(_CONFIG) );
@@ -40,6 +55,16 @@ void FreeConfig( _CONFIG* config )
   FreeIfAllocated( &(config->authServiceUrl) );
   FreeIfAllocated( &(config->remoteAddrEnvVar) );
   FreeIfAllocated( &(config->userAgentEnvVar) );
+
+  if( config->list )
+    {
+    FreeTagValue( config->list );
+    }
+
+  if( config->includes )
+    {
+    FreeTagValue( config->includes );
+    }
 
   free( config );
   }
@@ -201,7 +226,10 @@ void ReadConfig( _CONFIG* config, char* filePath )
   folder[0] = 0;
   (void)GetFolderFromPath( filePath, folder, sizeof( folder )-1 );
 
-  // Notice( "Config is being read from folder [%s]", folder );
+  if( EMPTY( folder ) )
+    config->configFolder = NULL;
+  else
+    config->configFolder = strdup( folder );
 
   if( EMPTY( filePath ) )
     {
@@ -214,14 +242,107 @@ void ReadConfig( _CONFIG* config, char* filePath )
     Error( "Failed to open configuration file %s", filePath );
     }
 
+  config->parserLocation = NewTagValue( filePath, "", config->parserLocation, 0 );
+  config->parserLocation->iValue = 0;
+  UpdateGlobalParsingLocation( config );
+  ++ ( config->currentlyParsing );
+
   char buf[BUFLEN];
+  char* endOfBuf = buf + sizeof(buf)-1;
   while( fgets(buf, sizeof(buf)-1, f )==buf )
     {
+    ++(config->parserLocation->iValue);
+    UpdateGlobalParsingLocation( config );
+
     char* ptr = TrimHead( buf );
     TrimTail( ptr );
 
+    while( *(ptr + strlen(ptr) - 1)=='\\' )
+      {
+      char* startingPoint = ptr + strlen(ptr) - 1;
+      if( fgets(startingPoint, endOfBuf-startingPoint-1, f )!=startingPoint )
+        {
+        ++(config->parserLocation->iValue);
+        UpdateGlobalParsingLocation( config );
+        break;
+        }
+      ++config->parserLocation->iValue;
+      UpdateGlobalParsingLocation( config );
+      TrimTail( startingPoint );
+      }
+
     if( *ptr==0 )
       {
+      continue;
+      }
+
+    if( *ptr=='#' )
+      {
+      ++ptr;
+      if( strncmp( ptr, "include", 7 )==0 )
+        { /* #include */
+        ptr += 7;
+        while( *ptr!=0 && ( *ptr==' ' || *ptr=='\t' ) )
+          {
+          ++ptr;
+          }
+        if( *ptr!='"' )
+          {
+          Error("#include must be followed by a filename in \" marks.");
+          }
+        ++ptr;
+        char* includeFileName = ptr;
+        while( *ptr!=0 && *ptr!='"' )
+          {
+          ++ptr;
+          }
+        if( *ptr=='"' )
+          {
+          *ptr = 0;
+          }
+        else
+          {
+          Error("#include must be followed by a filename in \" marks.");
+          }
+
+        int redundantInclude = 0;
+        for( _TAG_VALUE* i=config->includes; i!=NULL; i=i->next )
+          {
+          if( NOTEMPTY( i->tag ) && strcmp( i->tag, includeFileName )==0 )
+            {
+            redundantInclude = 1;
+            break;
+            }
+          }
+
+        if( redundantInclude==0 )
+          {
+          config->includes = NewTagValue( includeFileName, "included", config->includes, 1 );
+
+          char* confPath = SanitizeFilename( config->configFolder, NULL, includeFileName, 0 );
+          if( FileExists( confPath )==0 )
+            {
+            ReadConfig( config, confPath );
+            }
+          else
+            {
+            confPath = SanitizeFilename( folder, NULL, includeFileName, 0 );
+            if( FileExists( confPath )==0 )
+              {
+              ReadConfig( config, confPath );
+              }
+            else
+              {
+              Warning( "Cannot open #include \"%s\" -- skipping.",
+                       confPath );
+              }
+            FreeIfAllocated( &confPath );
+            }
+          FreeIfAllocated( &confPath );
+          }
+        }
+
+      /* not #include or #include completely read by now */
       continue;
       }
 
@@ -246,6 +367,15 @@ void ReadConfig( _CONFIG* config, char* filePath )
       ProcessConfigLine( ptr, equalsChar, config );
       }
     }
+
+  /* unroll the stack of config filenames after ReadConfig ended */
+  _TAG_VALUE* tmp = config->parserLocation->next;
+  if( config->parserLocation->tag!=NULL ) { FREE( config->parserLocation->tag ); }
+  if( config->parserLocation->value!=NULL ) { FREE( config->parserLocation->value ); }
+  FREE( config->parserLocation );
+  config->parserLocation = tmp;
+  UpdateGlobalParsingLocation( config );
+  -- ( config->currentlyParsing );
 
   fclose( f );
   }
