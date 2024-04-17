@@ -3,6 +3,7 @@
 void DefaultPage()
   {
   printf("Content-Type: text/html\r\n\r\n");
+  printedContentType = 1;
 
   printf("<html><body><p>API request must be provided.</p></body></html>\n");
   }
